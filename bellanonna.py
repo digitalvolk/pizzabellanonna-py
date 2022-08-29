@@ -86,7 +86,7 @@ def order():
 
 
 # liefere statische Dateien direkt aus (nur CSS und Hintergrundbild)
-@route("/<filename:re:styles\.css|hintergrund\.jpg>")
+@route("/<filename:re:styles\.css|hintergrund\.jpg|paypalbutton\.png>")
 def styles(filename):
     return static_file(filename, "")
 
