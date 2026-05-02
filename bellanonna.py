@@ -40,9 +40,11 @@ def index():
         # Der Preis soll "hübsch" formatiert sein (z.B. "8,00 €" statt "8.0")
         tabelle = tabelle + "<td>" + format_cost(pizza[3]) + "</td>"
         
-        # Hier kommt der Link zum Bestellen, übertragen wird Name und Preis der Pizza
+        # Hier kommt der Link zum Bestellen
+        # VARIANTE 1 (Zeile 45 aktiv): Name und Preis werden direkt per GET-Parameter bestimmt
         tabelle = tabelle + "<td><a href=\"order.html?pizza=" + str(pizza[0]) + "&preis=" + str(pizza[3]) +  "\">bestellen</a></td>"
-        #tabelle = tabelle + "<td><a href=\"order.html?pizza=" + str(pizza[4]) + "\">bestellen</a></td>"
+        # VARIANTE 2 (Zeile 47 aktiv): Name und Preis werden anhand einer ID aus der DB gelesen
+        # tabelle = tabelle + "<td><a href=\"order.html?pizza=" + str(pizza[4]) + "\">bestellen</a></td>"
         
         tabelle = tabelle + "</tr>"
     
@@ -54,13 +56,16 @@ def index():
 @route("/order.html")
 def order():
     # Prüfen, ob entweder der Name und Preis einer Pizza oder eine ID übergeben wurde
-    if (None != request.query.get("preis")):
+    if ((None != request.query.get("pizza")) and (None != request.query.get("preis"))):
         # wir bestimmen Namen und Preis über die Query-Parameter
         pizza_name = request.query.get("pizza")
         pizza_cost = float(request.query.get("preis"))
-    else:
+        
+        if str.isdigit(pizza_name):
+            abort(400)
+    elif (None != request.query.get("pizza")):
         # wir bestimmen Namen und Preis mittels einer DB-Abfrage
-        pizza_id = request.query.get("pizza") # quick fix mittels int(...), besser named parameters und Fehlerbehandlung benutzen
+        pizza_id = request.query.get("pizza") # quick fix mittels int(...), besser named parameters / parameterized queries und Fehlerbehandlung benutzen
         
         # Daten zur bestellten Pizza aus Datenbank holen
         db_connection = create_db_connection()
@@ -77,6 +82,8 @@ def order():
             # Hier sollte eine Fehlerbehandlung stattfinden ;)
             pizza_name = "zufällige Pizza"
             pizza_cost = 42
+    else:
+        abort(400)
     
     # lese Template-Datei für Bestellungen ein
     template = Path("order_template.html").read_text(encoding = "utf-8")
@@ -87,7 +94,7 @@ def order():
 
 
 # liefere statische Dateien direkt aus (nur CSS und Hintergrundbild)
-@route("/<filename:re:styles\.css|hintergrund\.jpg|paypalbutton\.png>")
+@route(r"/<filename:re:styles\.css|hintergrund\.jpg|paypalbutton\.png>")
 def styles(filename):
     return static_file(filename, "")
 
@@ -122,5 +129,5 @@ def dbms_execute(cursor, dbcon, sql):
         
 
 
-
-run(host = "localhost", port = 80)
+if __name__ == "__main__":
+    run(host = "localhost", port = 80)

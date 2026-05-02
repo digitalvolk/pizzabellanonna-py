@@ -1,0 +1,1 @@
+;UPDATE pizza SET cost = 3.5 WHERE id = 2;--
